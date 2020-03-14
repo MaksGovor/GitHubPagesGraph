@@ -416,6 +416,7 @@ const edge = (matrix, directed) => {
 };
 
 const viewDegree = degree => {
+  ctx2.clearRect(0, 0, ctx2.width, ctx2.height);
   const statistic = {
     isolated:[],
     hanging:[]
