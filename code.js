@@ -2,12 +2,19 @@
 
 const canvas = document.getElementById('c1');
 const ctx = canvas.getContext('2d');
+const canvas2 = document.getElementById('c2');
+const ctx2 = canvas2.getContext('2d');
+const coeff = 0.43;
 
+canvas2.width = window.innerWidth * coeff;
+canvas2.height = canvas2.width;
+canvas.width = window.innerWidth * coeff;
+canvas.height = canvas.width;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-ctx.lineWidth = 5;
+ctx.lineWidth = 2.4;
+ctx.fillStyle = 'white';
 ctx.font = '20px Vernada';
+ctx2.font = '20px Vernada';
 const branches = new Object();
 const vertex = new Object();
 const degree = new Object();
@@ -15,6 +22,7 @@ const connections = new Map();
 const radius = 30;
 let countD = 0;
 let countH = 0;
+let countBtn = 0;
 const sides = {
   sideRight: [],
   sideLeft: [],
@@ -68,7 +76,7 @@ const symetricMatrix = doSymetricMatrix(matrix, false);
 
 const graphTriangle = n => {
   let width = canvas.width / 2;
-  let height = 100;
+  let height = 150;
   let left = width;
   const divider = n > 14 ? 2.5 : 2;
   const lrvertex = Math.floor(n / divider - 2) * 2 + 1;
@@ -81,8 +89,9 @@ const graphTriangle = n => {
     if (i === 1) {
       ctx.beginPath();
       ctx.arc(width, height, radius, 0, 2 * Math.PI);
-      ctx.fillText(i, width , height );
+      ctx.fill()
       ctx.stroke();
+      ctx.strokeText(i, width - 5, height + 5);
       const ver = { width, height, num: i }
       vertex['ver' + i] = ver;
       degree['ver' + i] = {positive: 0, negative: 0};
@@ -95,7 +104,8 @@ const graphTriangle = n => {
     height += 120;
     ctx.beginPath();
     ctx.arc(width, height, radius, 0, 2 * Math.PI);
-    ctx.fillText(i, width - 5, height + 10);
+    ctx.fill();
+    ctx.strokeText(i, width - 5, height + 5);
     const verRight = { width, height, num: i};
     vertex['ver' + i] = verRight;
     degree['ver' + i] = {positive: 0, negative: 0};
@@ -103,8 +113,9 @@ const graphTriangle = n => {
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(left, height, radius, 0, 2 * Math.PI);
+    ctx.fill();
     const index = n + 2 - i;
-    ctx.fillText(index, left - 5 , height + 10);
+    ctx.strokeText(index, left - 5 , height + 5);
     const verLeft = { width: left, height , num: index};
     vertex['ver' + index] = verLeft;
     degree['ver' + index] = {positive: 0, negative: 0};
@@ -121,8 +132,9 @@ const graphTriangle = n => {
     width -= countDown;
     ctx.beginPath();
     ctx.arc(width, height, radius, 0, 2 * Math.PI);
+    ctx.fill();
     const index = rd + i + 1;
-    ctx.fillText(index, width - 5, height + 10);
+    ctx.strokeText(index, width - 5, height + 5);
     const verDown = { width, height, num: index };
     vertex['ver' + index] = verDown;
     degree['ver' + index] = {positive: 0, negative: 0};
@@ -130,9 +142,10 @@ const graphTriangle = n => {
     ctx.stroke();
   }
   //ctx.fillText('S', 20, 50);
-  console.dir(vertex);
-  console.dir(sides);
+  //console.dir(vertex);
+  //console.dir(sides);
   ctx.lineWidth = 4;
+  ctx.fillStyle = 'black';
 };
 
 
@@ -414,42 +427,48 @@ const viewDegree = degree => {
     const str = degree.status ?
       `Vertex ${i}: δ⁺(${i}) = ${degree['ver' + i].positive} δ⁻(${i}) = ${degree['ver' + i].negative}`:
       `Vertex ${i}: δ(${i}) = ${degree['ver' + i].positive}`
-    ctx.beginPath()
-    ctx.fillText(str, width, height, 280);
+    ctx2.beginPath()
+    ctx2.fillText(str, width, height);
     height+= 30
     ph = ph && (st1 === degree['ver' + i].positive + degree['ver' + i].negative) ? true: false;
   }
   for (let i = 1; i <= QUANTITY; i++){
     if (i === 1) {
-      ctx.fillText('Isolated vertexes :', width, height);
+      ctx2.fillText('Isolated vertexes :', width, height);
       height += 30;
     }
     if (degree['ver' + i].positive + degree['ver' + i].negative === 0) {
-      ctx.fillText(`Vertex ${i};`, width, height);
+      ctx2.fillText(`Vertex ${i};`, width, height);
       height += 30;
     }
   }
   for (let i = 1; i <= QUANTITY; i++){
     if (i === 1) {
-      ctx.fillText('Hahging vertexes :', width, height);
+      ctx2.fillText('Hahging vertexes :', width, height);
       height += 30;
     }
     if (degree['ver' + i].positive + degree['ver' + i].negative === 1) {
-      ctx.fillText(`Vertex ${i};`, width, height);
+      ctx2.fillText(`Vertex ${i};`, width, height);
       height += 30;
     }
   }
-  if(ph) ctx.fillText('Graph is homogeneous, degree: ' + st1, width, height, 280);
+  if(ph) ctx2.fillText('Graph is homogeneous, degree: ' + st1, width, height);
+  else ctx2.fillText('Graph isn`t homogeneous', width, height);
   return statistic;
 }
 
-edge(matrix, true);
 
 document.getElementById('statistics').onclick = function() {
   viewDegree(degree)
 }
-document.getElementById('reload').onclick = function() {
-  document.location.reload(true);
+
+document.getElementById('build').onclick = function() {
+  if (countBtn > 0) window.location.reload(true);
+  const flag = prompt('Directed or undirected ?');
+  if (flag.toLowerCase() === 'directed') edge(matrix, true);
+  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false);
+  else alert('Incorrectly answer');
+  countBtn++;
 }
 
 console.dir(branches);
