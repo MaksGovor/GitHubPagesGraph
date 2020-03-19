@@ -33,28 +33,28 @@ const QUANTITY = 10;
 
 const matrix = [
   [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 1, 0, 1, 0, 0, 0],  
-  [0, 0, 1, 0, 0, 1, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
 /*const matrix = [
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];*/
 
 
@@ -74,7 +74,7 @@ const doSymetricMatrix = (matrix, transp) => {
 
 const symetricMatrix = doSymetricMatrix(matrix, false);
 
-const graphTriangle = n => {
+const graphTriangle = (n, ctx) => {
   let width = canvas.width / 2;
   let height = 150;
   let left = width;
@@ -150,7 +150,7 @@ const graphTriangle = n => {
 
 
 
-graphTriangle(QUANTITY);
+graphTriangle(QUANTITY, ctx);
 
 
 const findCoords = (from, to, directed, arrowRadius) => {
@@ -415,6 +415,9 @@ const edge = (matrix, directed) => {
   }
 };
 
+
+// Lab 2 function
+
 const viewDegree = degree => {
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
   const statistic = {
@@ -458,18 +461,227 @@ const viewDegree = degree => {
   return statistic;
 }
 
+// Lab3 functions
 
-document.getElementById('statistics').onclick = function() {
-  viewDegree(degree)
+const serealizeMatrix = (name ,matrix, width, height) => {
+  const start = width;
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  ctx2.beginPath();
+  for (let i = 0; i < matrix.length; i++){
+    if (i === 0) ctx2.fillText('⎛',width - 10,height);
+    else if (i === matrix.length - 1) ctx2.fillText('⎝', width - 10,height);
+    else ctx2.fillText('⎜', width - 10,height);
+    if (i === Math.floor((matrix.length - 1) / 2)) ctx2.fillText(`${name} =`, width - 40 - 11.5*name.length , height);
+    for (let j = 0; j < matrix[i].length; j++){
+      ctx2.fillText(`${matrix[i][j]}`,width, height);
+      width += 30;
+      if (j === matrix[i].length - 1) {
+        if (i === 0) ctx2.fillText('⎞',width - 10,height);
+        else if (i === matrix.length - 1) ctx2.fillText('⎠', width - 10,height);
+        else ctx2.fillText('⎟', width - 10 ,height);
+        width = start;
+      }
+    }
+    height += 23;
+  }
+  return 0;
 }
+
+const TransMatrix = A => {
+  const m = A.length, n = A[0].length, AT = [];
+  for (let i = 0; i < n; i++){
+    AT[ i ] = [];
+    for (let j = 0; j < m; j++) AT[ i ][j] = A[j][ i ];
+  }
+    return AT;
+}
+
+const SumMatrix = (A,B) =>  {   
+    let m = A.length, n = A[0].length;
+    const C = [];
+    for (let i = 0; i < m; i++){
+      C[ i ] = [];
+      for (let j = 0; j < n; j++) C[ i ][j] = A[ i ][j]+B[ i ][j];
+     }
+    return C;
+}
+
+const MultiplyMatrix = (A,B) => {
+    let rowsA = A.length, colsA = A[0].length,
+        rowsB = B.length, colsB = B[0].length;
+    const C = [];
+    if (colsA != rowsB) return false;
+    for (let i = 0; i < rowsA; i++) C[i] = [];
+    for (let k = 0; k < colsB; k++) {
+      for (var i = 0; i < rowsA; i++) {
+        var t = 0;
+        for (var j = 0; j < rowsB; j++) t += A[ i ][j]*B[j][k];
+        C[ i ][k] = t;
+      }
+    }
+    return C;
+}
+
+const MatrixPow = (n,A) => { 
+  if (n == 1) return A;
+  else return MultiplyMatrix( A, MatrixPow(n-1,A) );
+}
+
+const connectivityMatrix = matrix => {
+  const transM = TransMatrix(matrix), res = new Array(), length = matrix.length;
+  for (let i = 0; i < length; i++){
+    res[ i ] = new Array();
+    for (let j = 0;j < length;j++) res[i][j] = matrix[i][j] * transM[i][j];
+  }
+  return res;
+}
+
+const reachabilityMatrix = matrix => {
+  const powers = [matrix];
+  for (let i = 2; i < matrix.length; i++){
+    powers.push(MatrixPow(i, matrix));
+  };
+  const result = powers.reduce(SumMatrix);
+  for (let i = 0; i < result.length; i++){
+    for(let j = 0; j < result[i].length; j++){
+      if (i === j || result[i][j] !== 0) result[i][j] = 1; 
+    }
+  }
+  return result;
+}
+
+// Find ways 2 and 3
+
+const findOne = (from, to, matrix , n) => {
+  const result = new Array();
+  let counter = 0;
+  for (let i = 0;i < matrix.length;i++){
+    for (let j = 0;j < matrix.length; j++){
+      if (n === 2){
+        if (i === j && matrix[i][to] === 1 && matrix[from][j] === 1)
+          if (from !== i || to !== i)
+            result.push(`${from + 1}➙${i + 1}➙${to + 1}`);
+      }
+      if (n === 3) {
+        if (matrix[i][to] === 1 && matrix[from][j] === 1 && matrix[j][i] === 1){
+          result.push(`${from + 1}➙${j + 1}➙${i + 1}➙${to + 1}`);
+        }
+      }
+    }
+  }
+  return result;
+}
+
+const findWays = (matrix, n) => {
+  const result = new Array();
+  const finder = MatrixPow(n, matrix), length = finder.length;
+  for (let i = 0;i < length;i++){
+    for (let j = 0;j < length;j++) {
+      if (finder[i][j] !== 0){
+        result.push(...findOne(i, j,matrix, n));
+      }
+    }
+  }
+  return result;
+}
+
+const serealizeWays = (ways, width, height, n) => {
+  ctx2.beginPath();
+  if (n) ctx2.fillText(`All paths of length ${n}`, width, height);
+  height += 30;
+  const length = ways.length;
+  for (let i = 0;i < length; i++){
+    ctx2.fillText(`{${ways[i]}}`, width, height);
+    if (length > 25 && i === Math.floor(length / 2)) width += ways[i].length * 15, height = 30;
+    height += 30;
+  }
+}
+
+console.log(findWays(matrix, 3));
+
+// Components of strong connectivity
+
+const findComponents = cMatrix => {
+  const res = new Object(), length = cMatrix.length;
+  for (let i = 0;i < length; i++){
+    let key = '';
+    for (let j = 0;j < length;j++){
+      key += cMatrix[i][j];
+    }
+    if (res[key]) res[key].push(i + 1);
+    else res[key] = [i + 1]; 
+  }
+  return res;
+}
+
+const serealizeComponents = cCollect => {
+  const res = new Array();
+  for (const i in cCollect){
+    res.push(cCollect[i].slice(0).reduce((a, b) => a + ';' + b))
+  }
+  return res;
+}
+
+// Condensation graph
+
+
+
+//Usage
+
+//Lab 1
 
 document.getElementById('build').onclick = function() {
   if (countBtn > 0) window.location.reload(true);
-  const flag = prompt('Directed or undirected ?');
+  const flag = prompt('Directed/undirected');
   if (flag.toLowerCase() === 'directed') edge(matrix, true);
   else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false);
   else alert('Incorrectly answer');
   countBtn++;
+}
+
+//Lab 2
+
+document.getElementById('statistics').onclick = function() {
+  viewDegree(degree);
+}
+
+//Lab 3
+
+const rMatrix = reachabilityMatrix(matrix);
+const cMatrix = connectivityMatrix(rMatrix);
+const components = findComponents(cMatrix);
+
+document.getElementById('matrix').onclick = function() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  const flag = prompt('Adjacency/reachability/connectivity');
+  if (flag.toLowerCase() === 'adjacency'){
+    const f2 = prompt('What degree?');
+    if (f2 === '1') serealizeMatrix('A', matrix, 80, 100);
+    else if (f2 === '2') serealizeMatrix('A²', MatrixPow(2, matrix), 80, 100);
+    else if (f2 === '3') serealizeMatrix('A³', MatrixPow(3, matrix), 80, 100);
+    else alert('Incorrectly answer');
+  }
+  else if (flag.toLowerCase() === 'reachability') {
+    const f3 = prompt('What degree?');
+    if (f3 === '1') serealizeMatrix('R', rMatrix, 80, 100);
+    else if (f3 === '2') serealizeMatrix('R²', MatrixPow(2, rMatrix), 80, 100);
+    else alert('Incorrectly answer');
+  }
+  else if (flag.toLowerCase() === 'connectivity'){
+    serealizeMatrix('S', cMatrix , 80, 100);
+  }
+}
+
+document.getElementById('ways').onclick = function() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  const flag = prompt('What length ?');
+  serealizeWays(findWays(matrix, parseInt(flag)),30, 30, flag);
+}
+
+document.getElementById('components').onclick = function() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height); 
+  ctx2.fillText('Components of strong connectivity:',30, 30);
+  serealizeWays(serealizeComponents(components), 30, 30);
 }
 
 console.dir(branches);
