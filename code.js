@@ -33,15 +33,15 @@ const QUANTITY = 10;
 
 const matrix = [
   [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 1, 0, 0, 0, 0, 1, 1],
+  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],  
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  [0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
 ];
 
 /*const matrix = [
@@ -74,7 +74,13 @@ const doSymetricMatrix = (matrix, transp) => {
 
 const symetricMatrix = doSymetricMatrix(matrix, false);
 
-const graphTriangle = (n, ctx) => {
+const graphTriangle = (n, ctx, sides, vertex, visible) => {
+  if (!visible) {
+    visible = new Array();
+    for (let p = 1; p <= n; p++) visible.push(p);
+    console.dir(visible);
+  } 
+  ctx.fillStyle = 'white';
   let width = canvas.width / 2;
   let height = 150;
   let left = width;
@@ -87,11 +93,13 @@ const graphTriangle = (n, ctx) => {
   console.dir({ down, lrvertex });
   for (let i = 1; i < Math.floor(n / divider); i++) {
     if (i === 1) {
-      ctx.beginPath();
-      ctx.arc(width, height, radius, 0, 2 * Math.PI);
-      ctx.fill()
-      ctx.stroke();
-      ctx.strokeText(i, width - 5, height + 5);
+      if (visible.includes(i)){
+        ctx.beginPath();
+        ctx.arc(width, height, radius, 0, 2 * Math.PI);
+        ctx.fill()
+        ctx.stroke();
+        ctx.strokeText(i, width - 5, height + 5);
+      }
       const ver = { width, height, num: i }
       vertex['ver' + i] = ver;
       degree['ver' + i] = {positive: 0, negative: 0};
@@ -102,25 +110,29 @@ const graphTriangle = (n, ctx) => {
     width += 120;
     left -= 120;
     height += 120;
-    ctx.beginPath();
-    ctx.arc(width, height, radius, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.strokeText(i, width - 5, height + 5);
+    if (visible.includes(i)){
+      ctx.beginPath();
+      ctx.arc(width, height, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeText(i, width - 5, height + 5);
+      ctx.stroke();
+    }
     const verRight = { width, height, num: i};
     vertex['ver' + i] = verRight;
     degree['ver' + i] = {positive: 0, negative: 0};
     sides.sideRight.push(verRight);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(left, height, radius, 0, 2 * Math.PI);
-    ctx.fill();
     const index = n + 2 - i;
-    ctx.strokeText(index, left - 5 , height + 5);
+    if (visible.includes(index)){
+      ctx.beginPath();
+      ctx.arc(left, height, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeText(index, left - 5 , height + 5);
+      ctx.stroke();
+    }
     const verLeft = { width: left, height , num: index};
     vertex['ver' + index] = verLeft;
     degree['ver' + index] = {positive: 0, negative: 0};
     sides.sideLeft.push(verLeft);
-    ctx.stroke();
     if (i === Math.floor(n / divider) - 1) 
       sides.sideDown.push(verRight, verLeft);
   }
@@ -130,16 +142,18 @@ const graphTriangle = (n, ctx) => {
   console.dir({ countDown });
   for (let i = 0; i < down; i++) {
     width -= countDown;
-    ctx.beginPath();
-    ctx.arc(width, height, radius, 0, 2 * Math.PI);
-    ctx.fill();
     const index = rd + i + 1;
-    ctx.strokeText(index, width - 5, height + 5);
+    if(visible.includes(index)) {
+      ctx.beginPath();
+      ctx.arc(width, height, radius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeText(index, width - 5, height + 5);
+      ctx.stroke();
+    }    
     const verDown = { width, height, num: index };
     vertex['ver' + index] = verDown;
     degree['ver' + index] = {positive: 0, negative: 0};
     sides.sideDown.push(verDown);
-    ctx.stroke();
   }
   //ctx.fillText('S', 20, 50);
   //console.dir(vertex);
@@ -148,9 +162,7 @@ const graphTriangle = (n, ctx) => {
   ctx.fillStyle = 'black';
 };
 
-
-
-graphTriangle(QUANTITY, ctx);
+graphTriangle(QUANTITY, ctx, sides, vertex);
 
 
 const findCoords = (from, to, directed, arrowRadius) => {
@@ -218,7 +230,7 @@ const drawArrowhead = (ctx, from, to, arrowRadius) => {
   ctx.fill();
 };
 
-const drawArrow = (from, to, directed, arrowRadius, status) => {
+const drawArrow = (from, to, directed, arrowRadius, status, ctx) => {
   const res = findCoords(from, to, directed, arrowRadius);
   if (status === 'full'){
     ctx.beginPath();
@@ -243,7 +255,7 @@ const drawArrow = (from, to, directed, arrowRadius, status) => {
   }
 };
 
-const drawCircle = (from, directed) => {
+const drawCircle = (from, directed, sides,ctx) => {
   let width;
   let height;
   if (sides.sideRight.includes(from)) {
@@ -297,7 +309,7 @@ const drawCircle = (from, directed) => {
 
 // Start changes
 
-const evasion = (from, to, event, directed, arrowRadius) => {
+const evasion = (from, to, event, directed, arrowRadius, sides, ctx) => {
   const centreX = (from.width + to.width) / 2;
   const centreY = (from.height + to.height) / 2;
   const rad = Math.sqrt(Math.pow(centreX - from.width, 2) + Math.pow(centreY - from.height, 2));
@@ -318,18 +330,18 @@ const evasion = (from, to, event, directed, arrowRadius) => {
     width = (to.width + from.width) / 2;
   }
   if (event === 'coincidence'){
-    drawCircle(from, directed);
+    drawCircle(from, directed, sides, ctx);
     return;
   }
   if (event === 'default' || event === 'alongside'){
     if (branches['f' + to.num + 't' + from.num] === 1 && directed) {
-      if (checkOne(from, to, 'sideDown') || (from.height === to.height)) {
+      if (checkOne(from, to, 'sideDown', sides) || (from.height === to.height)) {
         countD++;
         const i = countD % 2 === 0 ? 10: -10;
         height = from.height + i + i*Math.random();
         width = (to.width + from.width) / 2;
-        drawArrow(from ,{width, height},false , 0, 'begin');
-        drawArrow({width, height}, to, directed, arrowRadius, 'end');
+        drawArrow(from ,{width, height},false , 0, 'begin', ctx);
+        drawArrow({width, height}, to, directed, arrowRadius, 'end',ctx);
         return;
       }
       if (to.width === from.width) {
@@ -337,28 +349,28 @@ const evasion = (from, to, event, directed, arrowRadius) => {
         const i = countH % 2 === 0 ? 10: -10;
         height = (from.height + to.height) / 2;
         width = from.width + i + i*Math.random();
-        drawArrow(from ,{width, height},false , 0, 'begin');
-        drawArrow({width, height}, to, directed, arrowRadius, 'end');
+        drawArrow(from ,{width, height},false , 0, 'begin', ctx);
+        drawArrow({width, height}, to, directed, arrowRadius, 'end',ctx);
         return;
       }
       angle = Math.atan2(to.height - from.height,to.width - from.width);
       height = from.height + Math.sin(angle)*rad + 10*Math.random();
       width = from.width + 1.2*Math.cos(angle)*rad - 10*Math.random();
-      drawArrow(from ,{width, height},false , 0, 'begin');
-      drawArrow({width, height}, to, directed, arrowRadius, 'end');
+      drawArrow(from ,{width, height},false , 0, 'begin', ctx);
+      drawArrow({width, height}, to, directed, arrowRadius, 'end', ctx);
       return;
     }
     else {
-      drawArrow(from, to, directed, arrowRadius, 'full');
+      drawArrow(from, to, directed, arrowRadius, 'full',ctx);
       return;
     }
   }
-  drawArrow(from ,{width, height},false , 0, 'begin');
-  drawArrow({width, height}, to, directed, arrowRadius, 'end');
+  drawArrow(from ,{width, height},false , 0, 'begin', ctx);
+  drawArrow({width, height}, to, directed, arrowRadius, 'end', ctx);
 }
 
 
-const checkOne = (from, to, side) => {
+const checkOne = (from, to, side, sides) => {
   let count = 0;
   for (const ver of sides[side]) {
     if (ver.height === from.height && ver.width === from.width)
@@ -369,16 +381,16 @@ const checkOne = (from, to, side) => {
   return count === 2 ? true : false;
 }
 
-const check = (from, to) => {
+const check = (from, to, sides) => {
   if (from.num + 1 === to.num || from.num === to.num + 1) return 'alongside';
   if (from.num === to.num) return 'coincidence';
-  if (checkOne(from, to, 'sideDown')) return 'onSideDown';
-  if (checkOne(from, to, 'sideRight')) return 'onSideRight';
-  if (checkOne(from, to, 'sideLeft')) return 'onSideLeft';
+  if (checkOne(from, to, 'sideDown', sides)) return 'onSideDown';
+  if (checkOne(from, to, 'sideRight', sides)) return 'onSideRight';
+  if (checkOne(from, to, 'sideLeft', sides)) return 'onSideLeft';
   return 'default';
 }
 
-const edge = (matrix, directed) => {
+const edge = (matrix, directed, vertex, sides, ctx) => {
   degree.status = directed;
   const arrowRadius = directed ? 12 : 0;
   let count = 200;
@@ -402,13 +414,13 @@ const edge = (matrix, directed) => {
         connections.set(from, to);
         branches['f' + a + 't' + b] = 1;
         if (from.num === QUANTITY && to.num === 1) {
-          window.setTimeout(() => drawArrow(from, to, directed, arrowRadius, 'full'), count + 150);
+          window.setTimeout(() => drawArrow(from, to, directed, arrowRadius, 'full', ctx), count + 150);
           continue;
         }
-        const checked = check(from, to);
+        const checked = check(from, to, sides);
         window.setTimeout(() => {
           console.log(checked);
-          evasion(from, to, checked, directed, arrowRadius);
+          evasion(from, to, checked, directed, arrowRadius, sides, ctx);
         },count);
       }
     }
@@ -592,12 +604,11 @@ const serealizeWays = (ways, width, height, n) => {
   const length = ways.length;
   for (let i = 0;i < length; i++){
     ctx2.fillText(`{${ways[i]}}`, width, height);
-    if (length > 25 && i === Math.floor(length / 2)) width += ways[i].length * 15, height = 30;
+    if (length > 25 && i === Math.floor(length / 2)) width += (ways[i].length + 2) * 15, height = 30;
     height += 30;
   }
 }
 
-console.log(findWays(matrix, 3));
 
 // Components of strong connectivity
 
@@ -616,15 +627,64 @@ const findComponents = cMatrix => {
 
 const serealizeComponents = cCollect => {
   const res = new Array();
+  let i = 0;
+  const mapper = a => {
+    i++;
+    return `${a} (K${i})`
+  }
   for (const i in cCollect){
-    res.push(cCollect[i].slice(0).reduce((a, b) => a + ';' + b))
+    res.push(cCollect[i].slice(0))
+  }
+  return res.sort((a,b) => a[a.length - 1] > b[b.length - 1]).map(mapper);
+}
+
+
+// Condensation graph
+
+const compColection = components => {
+  const res = new Object();
+  for (const k in components){
+    const key = components[k].reduce((a, b) => a > b ? a: b);
+    res[key] = components[k];
   }
   return res;
 }
 
-// Condensation graph
+const condensationMatrix = (components,branches,length) => {
+  const res = [];
+  for (let k = 0;k < length; k++) {
+    res[k] = [];
+    for(let p = 0;p < length;p++) res[k][p] = 0;
+  }
+  for (const key1 in components){
+    for (let i = 0;i < components[key1].length; i++){
+      for (const key2 in components){
+        if (key1 !== key2){
+          for (let j = 0;j < components[key2].length; j++){
+            const from = components[key1][i], to = components[key2][j];
+            if (branches['f' + from + 't' + to] === 1){
+              res[key1 - 1][key2 - 1] = 1;
+            }
+          }
+        }
+      }
+    }
+  }
+  return res;
+}
 
-
+const renameVertex = (visible, vertex, ctx) => {
+  ctx.fillStyle = 'white';
+  ctx.lineWidth = 2.4;
+  for (let i = 1;i <= visible.length; i++){
+    ctx.beginPath();
+    const {width, height} = vertex['ver' + visible[i - 1]];
+    ctx.arc(width,height,25,0,2*Math.PI);
+    ctx.fill();
+    ctx.strokeText('K' + i,width - 10, height + 10);
+  }
+  ctx.fillStyle = 'black';
+}
 
 //Usage
 
@@ -633,8 +693,8 @@ const serealizeComponents = cCollect => {
 document.getElementById('build').onclick = function() {
   if (countBtn > 0) window.location.reload(true);
   const flag = prompt('Directed/undirected');
-  if (flag.toLowerCase() === 'directed') edge(matrix, true);
-  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false);
+  if (flag.toLowerCase() === 'directed') edge(matrix, true, vertex, sides, ctx);
+  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false, vertex, sides, ctx);
   else alert('Incorrectly answer');
   countBtn++;
 }
@@ -650,6 +710,25 @@ document.getElementById('statistics').onclick = function() {
 const rMatrix = reachabilityMatrix(matrix);
 const cMatrix = connectivityMatrix(rMatrix);
 const components = findComponents(cMatrix);
+const completeComponents = compColection(components);
+
+
+document.getElementById('condensation').onclick = function (){
+  ctx2.clearRect(0,0,canvas2.width, canvas2.height);
+  const vertexK = {};
+  const sidesK = {
+    sideDown:[],
+    sideLeft:[],
+    sideRight:[]
+  };
+  const condMatrix = condensationMatrix(completeComponents,branches,QUANTITY);
+  const visual = [];
+  for (const i in completeComponents) visual.push(parseInt(i));
+  graphTriangle(QUANTITY,ctx2,sidesK,vertexK,visual);
+  edge(condMatrix,true,vertexK,sidesK,ctx2);
+  renameVertex(visual,vertexK,ctx2);
+};
+
 
 document.getElementById('matrix').onclick = function() {
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
@@ -683,6 +762,3 @@ document.getElementById('components').onclick = function() {
   ctx2.fillText('Components of strong connectivity:',30, 30);
   serealizeWays(serealizeComponents(components), 30, 30);
 }
-
-console.dir(branches);
-console.dir(degree);
