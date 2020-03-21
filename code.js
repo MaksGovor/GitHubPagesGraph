@@ -635,7 +635,7 @@ const serealizeComponents = cCollect => {
   for (const i in cCollect){
     res.push(cCollect[i].slice(0))
   }
-  return res.sort((a,b) => a[a.length - 1] > b[b.length - 1]).map(mapper);
+  return res.sort((a,b) => a[a.length - 1] - b[b.length - 1]).map(mapper);
 }
 
 
