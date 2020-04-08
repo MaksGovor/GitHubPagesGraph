@@ -32,16 +32,16 @@ const QUANTITY = 10;
 
 
 const matrix = [
-  [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],  
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-  [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-  [0, 0, 1, 0, 1, 0, 0, 1, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
+  [0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
+  [1, 1, 0, 0, 0, 1, 1, 0, 0, 0],  
+  [0, 0, 0, 1, 0, 1, 0, 0, 0, 0], 
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
+  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
 /*const matrix = [
@@ -78,7 +78,7 @@ const graphTriangle = (n, ctx, sides, vertex, visible) => {
   if (!visible) {
     visible = new Array();
     for (let p = 1; p <= n; p++) visible.push(p);
-    console.dir(visible);
+    //console.dir(visible);
   } 
   ctx.fillStyle = 'white';
   let width = canvas.width / 2;
@@ -89,8 +89,8 @@ const graphTriangle = (n, ctx, sides, vertex, visible) => {
   const down = n - lrvertex;
   const rd = Math.floor(n / divider) - 1;
   const ld = n + 2 - rd;
-  console.dir({ rd, ld });
-  console.dir({ down, lrvertex });
+  //console.dir({ rd, ld });
+  //console.dir({ down, lrvertex });
   for (let i = 1; i < Math.floor(n / divider); i++) {
     if (i === 1) {
       if (visible.includes(i)){
@@ -139,7 +139,7 @@ const graphTriangle = (n, ctx, sides, vertex, visible) => {
   const countDown = Math
     .sqrt(Math
       .pow((vertex['ver' + rd].width - vertex['ver' + ld].width), 2)) / (down + 1);
-  console.dir({ countDown });
+  //console.dir({ countDown });
   for (let i = 0; i < down; i++) {
     width -= countDown;
     const index = rd + i + 1;
@@ -158,7 +158,7 @@ const graphTriangle = (n, ctx, sides, vertex, visible) => {
   //ctx.fillText('S', 20, 50);
   //console.dir(vertex);
   //console.dir(sides);
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3.4;
   ctx.fillStyle = 'black';
 };
 
@@ -390,7 +390,7 @@ const check = (from, to, sides) => {
   return 'default';
 }
 
-const edge = (matrix, directed, vertex, sides, ctx) => {
+const edge = (matrix, directed, vertex, sides, moment, ctx) => {
   degree.status = directed;
   const arrowRadius = directed ? 12 : 0;
   let count = 200;
@@ -418,10 +418,12 @@ const edge = (matrix, directed, vertex, sides, ctx) => {
           continue;
         }
         const checked = check(from, to, sides);
-        window.setTimeout(() => {
-          console.log(checked);
-          evasion(from, to, checked, directed, arrowRadius, sides, ctx);
-        },count);
+        if (moment){
+          window.setTimeout(() => {
+            console.log(checked);
+            evasion(from, to, checked, directed, arrowRadius, sides, ctx);
+          },count);
+        } else evasion(from, to, checked, directed, arrowRadius, sides, ctx);
       }
     }
   }
@@ -575,7 +577,7 @@ const findOne = (from, to, matrix , n) => {
             result.push(`${from + 1}➙${i + 1}➙${to + 1}`);
       }
       if (n === 3) {
-        if (matrix[i][to] === 1 && matrix[from][j] === 1 && matrix[j][i] === 1){
+        if (matrix[i][to] === 1 && matrix[from][j] === 1 && matrix[j][i] === 1 && !(from === i && to === j)){
           result.push(`${from + 1}➙${j + 1}➙${i + 1}➙${to + 1}`);
         }
       }
@@ -686,15 +688,161 @@ const renameVertex = (visible, vertex, ctx) => {
   ctx.fillStyle = 'black';
 }
 
-//Usage
+// Lab 4 functions (BFS)
+
+// Graphics 
+
+const hightlightVertex = (color, listVvertex, numberVertex, radius, matrixNum, ctx) => {
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.4;
+  for (const vertex of numberVertex){
+    const {width, height, num} = listVvertex['ver' + vertex];
+    const index = matrixNum[0].indexOf(num);
+    const numeration = `${num}(${matrixNum[1][index]})`;
+    ctx.beginPath();
+    ctx.arc(width, height, radius - 1.2, 0, 2*Math.PI);
+    ctx.fill()
+    ctx.strokeText(numeration, width - 15, height + 5, 35);
+  }
+}
+
+const hightlightEdge = (color, matrix, vertex, sides, numberEdges,ctx) => {
+  ctx.fillStyle = 'black';
+  ctx.lineWidth = 2.4;
+  const length = matrix.length;
+  for (let i = 0; i < length; i++) {
+    for (let j = 0; j < length; j++) {
+      if (matrix[i][j] === 1){
+        const a = i + 1, b = j + 1;   
+        const from = vertex['ver' + a], to = vertex['ver' + b];
+        const checked = check(from, to, sides);
+        branches['f' + a + 't' + b] = 1;
+        if (numberEdges.includes(`f${a}t${b}`)){
+          ctx.fillStyle = color;
+          ctx.strokeStyle = color;
+        }
+        evasion(from, to, checked, true, 12, sides, ctx);
+        ctx.fillStyle = 'black';
+        ctx.strokeStyle = 'black';
+      }
+    }
+  }
+}
+
+// Mechnic part
+
+const doInfoBfs = quantity => {
+  const res = new Object();
+  for (let i = 1; i <= quantity; i++) res['ver' + i] = 0;
+  return res;
+};
+
+const bfsAlgoritm = (start, matrix, infoBfs, visualReturned, direction) => {
+  const Quene = new Array();
+  const length = matrix.length;
+  let counter = 0;
+  let activeVer;  
+  infoBfs['ver' + start] = ++counter;
+  Quene.push(start);
+  while (Quene.length !== 0){
+    visualReturned.push(Quene.slice(0));
+    activeVer = Quene.shift();
+    for (let i = 0; i < length; i++){
+      const ch = direction ? 0 : (matrix[i][activeVer - 1] === 1);
+      if (((matrix[activeVer - 1][i] === 1) || ch) && infoBfs['ver' + (i + 1)] === 0) {
+        Quene.push(i + 1);
+        infoBfs['ver' + (i + 1)] = ++counter;
+      }
+    }
+  }
+  for (const key in infoBfs){
+    if(infoBfs[key] === 0){
+      visualReturned.push(['nextComponent'])
+      const res = bfsAlgoritm(parseInt(key.slice(3)), matrix, infoBfs, visualReturned, direction);
+      visualReturned.concat(res);
+    }
+  }
+  return visualReturned;
+}
+
+const hightlightBFS = (visualReturned, vertexBlue, edgesBlue, matrix, sides, vertex, infoBfs, direction,matrixNum, ctx) => {
+  if (visualReturned.length === 0) {
+    graphTriangle(QUANTITY, ctx, sides, vertex);
+    hightlightEdge('blue',matrix, vertex, sides,edgesBlue, ctx);
+    hightlightVertex('blue', vertex, vertexBlue, radius, matrixNum,ctx);
+    return;
+  }
+  graphTriangle(QUANTITY, ctx, sides, vertex);
+  const activeVer = visualReturned.shift().shift();
+  const limeV = new Array();
+  const visual = visualReturned[0] || [];
+  if (visual[0] !== 'nextComponent') { 
+    for (const i of visual) if(!vertexBlue.includes(i)) limeV.push(i);
+    vertexBlue.push(...visual, activeVer);
+    for (const to of visual) {
+      if (!infoBfs['ver' + to]) {
+          const pushedEdge = direction ?
+            `f${activeVer}t${to}`:
+            branches[`f${activeVer}t${to}`] ?`f${activeVer}t${to}` : `f${to}t${activeVer}`;
+          edgesBlue.push(pushedEdge);
+          infoBfs['ver' + to] = 1;
+        }
+    }
+  } else {
+    visualReturned.shift();
+    vertexBlue.push(activeVer);
+  }
+  hightlightEdge('blue',matrix, vertex, sides,edgesBlue, ctx);
+  hightlightVertex('blue', vertex, vertexBlue, radius,matrixNum, ctx);
+  hightlightVertex('red', vertex, [activeVer], radius,matrixNum, ctx);
+  hightlightVertex('lime',vertex,limeV,radius,matrixNum,ctx);
+}
+
+const doTreeTravesal = (QUANTITY, edgesBlue) =>{
+  const res = [];
+  for (let i = 0; i < QUANTITY; i++){
+    res[i] = [];
+    for (let j = 0; j < QUANTITY; j++){
+      if (edgesBlue.includes(`f${i + 1}t${j + 1}`)) res[i][j] = 1;
+      else res[i][j] = 0;
+    }
+  }
+  return res;
+}
+
+const doMatrixNumeration = infoBfs => {
+  const res = [[],[]];
+  for (const key in infoBfs) {
+    const c = parseInt(key.slice(3)) - 1;
+    res[0][c] = c + 1;
+    res[1][c] = infoBfs[key];
+  }
+  return res;
+}
+
+const renameInTree = (vertex, matrixNum, ctx) => {
+  ctx.fillText(`🄱🄵🅂 search tree 🌲`, 40, 30);
+  ctx.fillStyle = '#deff9c';
+  for (const key in vertex) {
+    const {width, height, num} = vertex[key];
+    const index = matrixNum[0].indexOf(num);
+    ctx.beginPath();
+    ctx.arc(width, height, radius - 1.2, 0, 2*Math.PI);
+    ctx.fill();
+    ctx.strokeText(`${num}(${matrixNum[1][index]})`, width - 15, height + 5, 35);
+  }
+  ctx.fillStyle = 'black';
+}
+
+//Usage // Begin //
 
 //Lab 1
 
 document.getElementById('build').onclick = function() {
   if (countBtn > 0) window.location.reload(true);
   const flag = prompt('Directed/undirected');
-  if (flag.toLowerCase() === 'directed') edge(matrix, true, vertex, sides, ctx);
-  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false, vertex, sides, ctx);
+  if (flag.toLowerCase() === 'directed') edge(matrix, true, vertex, sides, true, ctx);
+  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false, vertex, sides, true, ctx);
   else alert('Incorrectly answer');
   countBtn++;
 }
@@ -715,6 +863,7 @@ const completeComponents = compColection(components);
 
 document.getElementById('condensation').onclick = function (){
   ctx2.clearRect(0,0,canvas2.width, canvas2.height);
+  ctx2.lineWidth = 2.4;
   const vertexK = {};
   const sidesK = {
     sideDown:[],
@@ -725,14 +874,15 @@ document.getElementById('condensation').onclick = function (){
   const visual = [];
   for (const i in completeComponents) visual.push(parseInt(i));
   graphTriangle(QUANTITY,ctx2,sidesK,vertexK,visual);
-  edge(condMatrix,true,vertexK,sidesK,ctx2);
+  edge(condMatrix,true,vertexK,sidesK,true,ctx2);
   renameVertex(visual,vertexK,ctx2);
 };
 
 
 document.getElementById('matrix').onclick = function() {
+  ctx2.fillStyle = 'black';
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
-  const flag = prompt('Adjacency/reachability/connectivity');
+  const flag = prompt('Adjacency/reachability/connectivity/bypass/numeration');
   if (flag.toLowerCase() === 'adjacency'){
     const f2 = prompt('What degree?');
     if (f2 === '1') serealizeMatrix('A', matrix, 80, 100);
@@ -749,16 +899,69 @@ document.getElementById('matrix').onclick = function() {
   else if (flag.toLowerCase() === 'connectivity'){
     serealizeMatrix('S', cMatrix , 80, 100);
   }
+  else if (flag.toLowerCase() === 'bypass'){
+    serealizeMatrix('B', doTreeTravesal(QUANTITY, edgesBlue) , 80, 100);
+  }
+  else if (flag.toLowerCase() === 'numeration'){
+    serealizeMatrix('N', doMatrixNumeration(infoBfs) , 80, 100);
+  }
 }
 
 document.getElementById('ways').onclick = function() {
+  ctx2.fillStyle = 'black';
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
   const flag = prompt('What length ?');
   serealizeWays(findWays(matrix, parseInt(flag)),30, 30, flag);
 }
 
 document.getElementById('components').onclick = function() {
+  ctx2.fillStyle = 'black';
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height); 
   ctx2.fillText('Components of strong connectivity:',30, 30);
   serealizeWays(serealizeComponents(components), 30, 30);
 }
+
+// Lab 4
+
+const vertexBlue = new Array();
+const edgesBlue = new Array();
+const infoBfs = doInfoBfs(QUANTITY), infoBfs2 = doInfoBfs(QUANTITY);
+const visualReturned = new Array();
+
+
+document.getElementById('start').onclick = function(){
+  const flag = prompt('Enter start vertex:');
+  const flag2 = confirm('Consider the direction of the arrows?(Enter yes of cancellation)');
+  const qq = bfsAlgoritm(parseInt(flag), matrix, infoBfs, visualReturned, flag2);
+  const matrixN = doMatrixNumeration(infoBfs);
+  
+  document.getElementById('BFS').onclick = function() {
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    ctx2.fillStyle = 'black';
+    ctx2.fillText(`Start vertex: ${flag}`, 100, 80);
+    const vertex2 = new Object();
+    const sides2 = {
+    sideDown: [],
+    sideLeft: [],
+    sideRight: []
+    }
+    ctx2.lineWidth = 2;
+    hightlightBFS(qq,vertexBlue,edgesBlue, matrix,sides2, vertex2, infoBfs2, flag2, matrixN, ctx2);
+  }
+
+
+  document.getElementById('tree').onclick = function() {
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height)
+    const vertexT = new Object();
+    const sidesT = {
+      sideDown: [],
+      sideLeft: [],
+      sideRight: []
+      }
+    const matrixT = doTreeTravesal(QUANTITY,edgesBlue);
+    graphTriangle(QUANTITY, ctx2, sidesT, vertexT);
+    renameInTree(vertexT,matrixN,ctx2);
+    edge(matrixT, true, vertexT, sidesT, true, ctx2);
+  }  
+}
+
