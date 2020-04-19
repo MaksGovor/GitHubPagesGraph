@@ -11,15 +11,17 @@ canvas2.height = canvas2.width;
 canvas.width = window.innerWidth * coeff;
 canvas.height = canvas.width;
 
+const defaultFont = '20px Vernada';
 ctx.lineWidth = 2.4;
 ctx.fillStyle = 'white';
-ctx.font = '20px Vernada';
-ctx2.font = '20px Vernada';
+ctx.font = defaultFont;
+ctx2.font = defaultFont;
 const branches = new Object();
 const vertex = new Object();
 const degree = new Object();
 const connections = new Map(); 
 const radius = 30;
+let countA = 0;
 let countD = 0;
 let countH = 0;
 let countBtn = 0;
@@ -35,14 +37,27 @@ const matrix = [
   [0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
   [1, 1, 0, 0, 0, 1, 1, 0, 0, 0],  
   [0, 0, 0, 1, 0, 1, 0, 0, 0, 0], 
-  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+  [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 1, 1, 1, 0, 1, 0],
   [0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
-  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+  [0, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+  [1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
+
+const weightM = [
+  [ 0, 85,  0,  1, 0,  0,  0,  0, 40, 88],
+  [85,  0,  0, 45,  0, 17, 18, 99,  0,  0],  
+  [ 0,  0,  0, 97,  4, 36, 55,  0,  0,  0], 
+  [1, 45, 97,  0, 64,  0,  0,  0,  0,  0],
+  [0,  0,  4, 64,  0, 25, 84,  0, 82,  0],
+  [ 0, 17, 36,  0, 25,  0, 38,  0, 42,  0],
+  [ 0, 18, 55,  0, 84, 38,  0, 68,  0,  0],
+  [ 0, 99,  0,  0,  0,  0, 68,  0,  0,  0],
+  [40,  0,  0,  0, 82, 42,  0,  0,  0, 38],
+  [88,  0,  0,  0,  0,  0,  0,  0, 38,  0]
+]
 
 /*const matrix = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -255,9 +270,10 @@ const drawArrow = (from, to, directed, arrowRadius, status, ctx) => {
   }
 };
 
-const drawCircle = (from, directed, sides,ctx) => {
+const drawCircle = (from, directed, sides, weight,ctx) => {
   let width;
   let height;
+  const rras = 40;
   if (sides.sideRight.includes(from)) {
     width = from.width + radius;
     height = from.height - radius;
@@ -269,8 +285,9 @@ const drawCircle = (from, directed, sides,ctx) => {
       ctx.fill();
     }
     ctx.beginPath();
-    ctx.arc(width , height , 40, Math.PI / 2, Math.PI , true);
+    ctx.arc(width , height , rras, Math.PI / 2, Math.PI , true);
     ctx.stroke();
+    if (weight) weightEdge(ctx, width, height - rras, 30, 20, 8, weight);
     return;
   }
 
@@ -285,8 +302,9 @@ const drawCircle = (from, directed, sides,ctx) => {
       ctx.fill();
     }
     ctx.beginPath();
-    ctx.arc(width , height , 40, Math.PI / 2, 0 , false);
+    ctx.arc(width , height , rras, Math.PI / 2, 0 , false);
     ctx.stroke();
+    if (weight) weightEdge(ctx, width, height - rras, 30, 20, 8, weight);
     return;
   }
     
@@ -301,15 +319,40 @@ const drawCircle = (from, directed, sides,ctx) => {
       ctx.fill();
     }
     ctx.beginPath();
-    ctx.arc(width , height , 40, 0, 1.5*Math.PI , false);
+    ctx.arc(width , height , rras, 0, 1.5*Math.PI , false);
     ctx.stroke();
+    if (weight) weightEdge(ctx, width, height + rras, 30, 20, 8, weight);
     return;
   }
 }
 
+const weightEdge = (ctx, x1, y1, width, height, radius, text) => {
+  const x = x1 - width / 2, y = y1 - height / 2;
+  ctx.beginPath();
+  ctx.moveTo(x,y+radius);
+  ctx.lineTo(x,y+height-radius);
+  ctx.quadraticCurveTo(x,y+height,x+radius,y+height);
+  ctx.lineTo(x+width-radius,y+height);
+  ctx.quadraticCurveTo(x+width,y+height,x+width,y+height-radius);
+  ctx.lineTo(x+width,y+radius);
+  ctx.quadraticCurveTo(x+width,y,x+width-radius,y);
+  ctx.lineTo(x+radius,y);
+  ctx.quadraticCurveTo(x,y,x,y+radius);
+  ctx.stroke();
+  ctx.fillStyle = '#ceadff';
+  ctx.fill();
+  ctx.fillStyle = 'black';
+  ctx.fillText(text, x + (width - 11.5 * text.length)/2, y + height /1.2, width);
+}
+
+const findWeightCoord = (from, to) => ({
+  width:(from.width + to.width) / 2,
+  height: (from.height + to.height)/2  
+})
+
 // Start changes
 
-const evasion = (from, to, event, directed, arrowRadius, sides, ctx) => {
+const evasion = (from, to, event, directed, arrowRadius, sides, weight, ctx) => {
   const centreX = (from.width + to.width) / 2;
   const centreY = (from.height + to.height) / 2;
   const rad = Math.sqrt(Math.pow(centreX - from.width, 2) + Math.pow(centreY - from.height, 2));
@@ -330,18 +373,19 @@ const evasion = (from, to, event, directed, arrowRadius, sides, ctx) => {
     width = (to.width + from.width) / 2;
   }
   if (event === 'coincidence'){
-    drawCircle(from, directed, sides, ctx);
+    drawCircle(from, directed, sides, weight, ctx);
     return;
   }
   if (event === 'default' || event === 'alongside'){
     if (branches['f' + to.num + 't' + from.num] === 1 && directed) {
       if (checkOne(from, to, 'sideDown', sides) || (from.height === to.height)) {
         countD++;
-        const i = countD % 2 === 0 ? 10: -10;
-        height = from.height + i + i*Math.random();
+        const i = countD % 2 === 0 ? 20: -20;
+        height = from.height + i;
         width = (to.width + from.width) / 2;
         drawArrow(from ,{width, height},false , 0, 'begin', ctx);
         drawArrow({width, height}, to, directed, arrowRadius, 'end',ctx);
+        if (weight) weightEdge(ctx, width, height, 30, 20, 8, weight);
         return;
       }
       if (to.width === from.width) {
@@ -351,6 +395,7 @@ const evasion = (from, to, event, directed, arrowRadius, sides, ctx) => {
         width = from.width + i + i*Math.random();
         drawArrow(from ,{width, height},false , 0, 'begin', ctx);
         drawArrow({width, height}, to, directed, arrowRadius, 'end',ctx);
+        if (weight) weightEdge(ctx, width, height, 30, 20, 8, weight);
         return;
       }
       angle = Math.atan2(to.height - from.height,to.width - from.width);
@@ -358,15 +403,19 @@ const evasion = (from, to, event, directed, arrowRadius, sides, ctx) => {
       width = from.width + 1.2*Math.cos(angle)*rad - 10*Math.random();
       drawArrow(from ,{width, height},false , 0, 'begin', ctx);
       drawArrow({width, height}, to, directed, arrowRadius, 'end', ctx);
+      if (weight) weightEdge(ctx, width, height, 30, 20, 8, weight);
       return;
     }
     else {
       drawArrow(from, to, directed, arrowRadius, 'full',ctx);
+      const {width, height} = findWeightCoord(from, to);
+      if (weight) weightEdge(ctx, width, height, 30, 20, 8, weight);
       return;
     }
   }
   drawArrow(from ,{width, height},false , 0, 'begin', ctx);
   drawArrow({width, height}, to, directed, arrowRadius, 'end', ctx);
+  if (weight) weightEdge(ctx, width, height, 30, 20, 8, weight);
 }
 
 
@@ -390,7 +439,7 @@ const check = (from, to, sides) => {
   return 'default';
 }
 
-const edge = (matrix, directed, vertex, sides, moment, ctx) => {
+const edge = (matrix, directed, vertex, sides, moment, weightM, ctx) => {
   degree.status = directed;
   const arrowRadius = directed ? 12 : 0;
   let count = 200;
@@ -400,6 +449,7 @@ const edge = (matrix, directed, vertex, sides, moment, ctx) => {
     for (let j = 0; j < length; j++) {
       if (matrix[i][j] === 1) {
         count += 100;
+        const weight = weightM ? weightM[i][j].toString() : weightM;
         const a = i + 1;
         const b = j + 1;
         if (directed) {
@@ -414,16 +464,22 @@ const edge = (matrix, directed, vertex, sides, moment, ctx) => {
         connections.set(from, to);
         branches['f' + a + 't' + b] = 1;
         if (from.num === QUANTITY && to.num === 1) {
-          window.setTimeout(() => drawArrow(from, to, directed, arrowRadius, 'full', ctx), count + 150);
+          window.setTimeout(() => {
+            drawArrow(from, to, directed, arrowRadius, 'full', ctx), count + 150;
+            if (weight){
+            const {width, height} = findWeightCoord(from,to);
+            weightEdge(ctx, width, height, 30, 20, 8 ,weight);
+            }
+          });
           continue;
         }
         const checked = check(from, to, sides);
         if (moment){
           window.setTimeout(() => {
             console.log(checked);
-            evasion(from, to, checked, directed, arrowRadius, sides, ctx);
+            evasion(from, to, checked, directed, arrowRadius, sides, weight, ctx);
           },count);
-        } else evasion(from, to, checked, directed, arrowRadius, sides, ctx);
+        } else evasion(from, to, checked, directed, arrowRadius, sides, weight, ctx);
       }
     }
   }
@@ -721,7 +777,7 @@ const hightlightEdge = (color, matrix, vertex, sides, numberEdges,ctx) => {
           ctx.fillStyle = color;
           ctx.strokeStyle = color;
         }
-        evasion(from, to, checked, true, 12, sides, ctx);
+        evasion(from, to, checked, true, 12, sides, false, ctx);
         ctx.fillStyle = 'black';
         ctx.strokeStyle = 'black';
       }
@@ -834,15 +890,92 @@ const renameInTree = (vertex, matrixNum, ctx) => {
   ctx.fillStyle = 'black';
 }
 
+//Lab 5 Functions (Prime)
+
+// Mechanic part
+
+const matrixSkl = n => {
+  const res = [];
+  for (let i = 0; i < n; i++){
+    res[i] = [];
+    for (let j = 0; j < n; j++) res[i][j] = 0;
+  }
+  return res;
+}
+
+
+const minSkeleton = (weightM, visitedVert, visualizeArr) => {
+  let weight = 0;
+  const skeletonM = matrixSkl(QUANTITY);
+  const length = skeletonM.length;
+  while (visitedVert.length !== length) {
+    let resmin = [];
+    for (const v of visitedVert){
+      const sorted = weightM[v - 1].filter(a => a !== 0);
+      let min;
+      if (sorted.length) min = sorted.reduce((a, b) => a < b? a: b);
+      if (min) {
+        const index = weightM[v - 1].indexOf(min) + 1;
+        if (!visitedVert.includes(index)) resmin.push([min, [index,v]]);
+      }
+    }
+    if (resmin.length === 0) {
+      const none = [];
+      for (let k  = 1; k <= QUANTITY; k++) if (!visitedVert.includes(k)) none.push(k);
+      for (const v of none){
+        const sorted = weightM[v - 1].filter(a => a !== 0);
+        let min;
+        if (sorted.length) min = sorted.reduce((a, b) => a < b? a: b);
+          if (min) {
+          const index = weightM[v - 1].indexOf(min) + 1;
+          if (visitedVert.includes(index)) resmin.push([min, [index,v]]);
+        }
+      }
+    }
+    const res = resmin.reduce((a, b) => a[0] < b [0]? a : b);
+    weight += res[0];
+    console.log(res);
+    visualizeArr.push(res[1]);
+    visitedVert.push(res[1][0]);
+    weightM[res[1][0] - 1][res[1][1] - 1] = 0,weightM[res[1][1] - 1][res[1][0] - 1] = 0;
+    skeletonM[res[1][0] - 1][res[1][1] - 1] = 1,skeletonM[res[1][1] - 1][res[1][0] - 1] = 1;
+    resmin = [];
+  }
+  return {skeletonM, weight};
+}
+
+
+// Graphics part
+
+const buildPrimesSkl = (visualizeArr,visualize, vertex, sides,visual, weightM, weight, ctx) => {
+  if (visualizeArr.length === 0) {
+    graphTriangle(QUANTITY, ctx2, sides, vertex);
+    edge(skeletonM, false, vertex, sides, true, weightM, ctx2);
+    ctx.fillText(`The weight of the minimum remaining tree is : ${weight}`, 20, 30);
+    return;
+  };
+  visualize.push(visualizeArr.shift());
+  for (const i of visualize) visual.push(...i);
+  graphTriangle(QUANTITY, ctx, sides, vertex, visual);
+  for (const coords of visualize){
+    const from = vertex['ver' + coords[0]], to = vertex['ver' + coords[1]];
+    const checked = check(from, to, sides);
+    const weight = weightM[coords[0] - 1][coords[1] - 1].toString();
+    evasion(from, to, checked, false, 0, sides, weight, ctx);
+  }
+}
+
+
 //Usage // Begin //
 
 //Lab 1
 
 document.getElementById('build').onclick = function() {
   if (countBtn > 0) window.location.reload(true);
-  const flag = prompt('Directed/undirected');
-  if (flag.toLowerCase() === 'directed') edge(matrix, true, vertex, sides, true, ctx);
-  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false, vertex, sides, true, ctx);
+  const flag = prompt('Directed/undirected/GraphForLab5');
+  if (flag.toLowerCase() === 'directed') edge(matrix, true, vertex, sides, true, false, ctx);
+  else if (flag.toLowerCase() === 'undirected') edge(symetricMatrix, false, vertex, sides, true, false, ctx);
+  else if (flag.toLowerCase() === 'graphforlab5') edge(symetricMatrix, false, vertex, sides, true,weightM, ctx);
   else alert('Incorrectly answer');
   countBtn++;
 }
@@ -874,7 +1007,7 @@ document.getElementById('condensation').onclick = function (){
   const visual = [];
   for (const i in completeComponents) visual.push(parseInt(i));
   graphTriangle(QUANTITY,ctx2,sidesK,vertexK,visual);
-  edge(condMatrix,true,vertexK,sidesK,true,ctx2);
+  edge(condMatrix,true,vertexK,sidesK,true, false,ctx2);
   renameVertex(visual,vertexK,ctx2);
 };
 
@@ -882,7 +1015,7 @@ document.getElementById('condensation').onclick = function (){
 document.getElementById('matrix').onclick = function() {
   ctx2.fillStyle = 'black';
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
-  const flag = prompt('Adjacency/reachability/connectivity/bypass/numeration');
+  const flag = prompt('Adjacency/reachability/connectivity/bypass/numeration/minskeleton');
   if (flag.toLowerCase() === 'adjacency'){
     const f2 = prompt('What degree?');
     if (f2 === '1') serealizeMatrix('A', matrix, 80, 100);
@@ -904,6 +1037,9 @@ document.getElementById('matrix').onclick = function() {
   }
   else if (flag.toLowerCase() === 'numeration'){
     serealizeMatrix('N', doMatrixNumeration(infoBfs) , 80, 100);
+  }
+  else if (flag.toLowerCase() === 'minskeleton'){
+    serealizeMatrix('M', skeletonM , 80, 100);
   }
 }
 
@@ -961,7 +1097,29 @@ document.getElementById('start').onclick = function(){
     const matrixT = doTreeTravesal(QUANTITY,edgesBlue);
     graphTriangle(QUANTITY, ctx2, sidesT, vertexT);
     renameInTree(vertexT,matrixN,ctx2);
-    edge(matrixT, true, vertexT, sidesT, true, ctx2);
+    edge(matrixT, true, vertexT, sidesT, true, false, ctx2);
   }  
 }
 
+
+// Lab 5
+
+
+const visualizeArr = new Array();
+const WM = doSymetricMatrix(weightM);
+const {skeletonM, weight} = minSkeleton(WM,[1], visualizeArr);
+console.log(weight);
+const visualaze = new Array(), visual = new Array();
+
+
+document.getElementById('skeleton').onclick = function() {
+  ctx2.lineWidth = 2.4;
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  const vertexP = new Array();
+  const sidesP = {
+    sideDown: [],
+    sideLeft: [],
+    sideRight: []
+  };
+  buildPrimesSkl(visualizeArr, visualaze, vertexP, sidesP, visual, weightM, weight, ctx2);
+}
