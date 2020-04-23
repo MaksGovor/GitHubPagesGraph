@@ -655,9 +655,10 @@ const findWays = (matrix, n) => {
   return result;
 }
 
-const serealizeWays = (ways, width, height, n) => {
+const serealizeWays = (ways, width, height, n, d) => {
   ctx2.beginPath();
-  if (n) ctx2.fillText(`All paths of length ${n}`, width, height);
+  if (d) ctx2.fillText('Shortest paths from the vertex 1', width, height);
+  if (n && !d) ctx2.fillText(`All paths of length ${n}`, width, height);
   height += 30;
   const length = ways.length;
   for (let i = 0;i < length; i++){
@@ -753,8 +754,8 @@ const hightlightVertex = (color, listVvertex, numberVertex, radius, matrixNum, c
   ctx.lineWidth = 2.4;
   for (const vertex of numberVertex){
     const {width, height, num} = listVvertex['ver' + vertex];
-    const index = matrixNum[0].indexOf(num);
-    const numeration = `${num}(${matrixNum[1][index]})`;
+    const index = matrixNum ? matrixNum[0].indexOf(num) : 0;
+    const numeration = matrixNum ? `${num}(${matrixNum[1][index]})` : `${num}`;
     ctx.beginPath();
     ctx.arc(width, height, radius - 1.2, 0, 2*Math.PI);
     ctx.fill()
@@ -934,7 +935,7 @@ const minSkeleton = (weightM, visitedVert, visualizeArr) => {
     }
     const res = resmin.reduce((a, b) => a[0] < b [0]? a : b);
     weight += res[0];
-    console.log(res);
+    //console.log(res);
     visualizeArr.push(res[1]);
     visitedVert.push(res[1][0]);
     weightM[res[1][0] - 1][res[1][1] - 1] = 0,weightM[res[1][1] - 1][res[1][0] - 1] = 0;
@@ -965,6 +966,115 @@ const buildPrimesSkl = (visualizeArr,visualize, vertex, sides,visual, weightM, w
   }
 }
 
+// Lab 6 (Deikstra algoritm)
+
+// Mechanc part
+
+const dijkstra = (weightM, start) => {
+  const distances = [];
+  for (let i = 0; i < weightM.length; i++) distances[i] = Number.MAX_VALUE;
+  distances[start] = 0;
+  let visited = [];
+  while (true) {
+      let shortestDistance = Number.MAX_VALUE;
+      let shortestIndex = -1;
+      for (var i = 0; i < weightM.length; i++) {
+          if (distances[i] < shortestDistance && !visited[i]) {
+              shortestDistance = distances[i];
+              shortestIndex = i;
+          }
+      }
+      if (shortestIndex === -1) {
+          return distances;
+      }
+      for (let i = 0; i < weightM[shortestIndex].length; i++) {
+          if (weightM[shortestIndex][i] !== 0 && distances[i] > distances[shortestIndex] + weightM[shortestIndex][i]) {
+              distances[i] = distances[shortestIndex] + weightM[shortestIndex][i];
+          }
+      }
+      visited[shortestIndex] = true;
+  }
+};
+
+const buildShortestPath = (weightM, weightsMap, endPos) => {
+  let endNodeWeight = weightsMap[endPos];
+  if (endNodeWeight === Number.MAX_VALUE) return 'Infinity';
+  const path = [];
+  let pos = endPos;
+  while (endNodeWeight !== 0) {
+    for (let i = 0;i < weightM[pos].length; i++) {
+      if (endNodeWeight === weightM[pos][i] + weightsMap[i]) {
+        path.unshift(+i + 1);
+        endNodeWeight = weightsMap[i];
+        pos = i;
+      }
+    }
+  }
+  if (!path.includes(endPos + 1)) path.push(endPos + 1);
+  return path;
+}
+
+const dePath = (weightM, weightsMap, quantity) => {
+  const res = [];
+  for (let i = 0;i < quantity; i++) res.push(buildShortestPath(weightM, weightsMap, i));
+  return res;
+}
+
+// Graphic part
+
+const doQueneD = (paths, weightsMap) => {
+  const res = [];
+  for (let i = 0; i < weightsMap.length; i++) {
+    res[i] = [weightsMap[i], paths[i]];
+  }
+  return res.sort((a, b) => a[0] - b[0]).slice(1);
+}
+
+const infChek = gpaths => {
+  if (gpaths[0] === 'Infinity') {
+    gpaths.shift();
+    infChek(gpaths);
+  }
+}
+
+const graphicsDijkstra = (vertex, sides, weightM, gpaths, visualVert, visualEdge, start ,ctx) => {
+  const main = () => {
+    graphTriangle(QUANTITY, ctx, sides, vertex);
+    hightlightVertex('blue', vertex, [1,2,3,4,5,6,7,8,9,10], radius, null, ctx2);
+    hightlightVertex('lime', vertex, visualVert, radius, null, ctx2);
+    hightlightVertex('red', vertex, [start], radius, null, ctx2);
+    for (const coords of visualEdge) {
+      const from = vertex['ver' + coords[0]], to = vertex['ver' + coords[1]];
+      const checked = check(from, to, sides);
+      const weight = weightM[coords[0] - 1][coords[1] - 1].toString();
+      evasion(from, to, checked, false, 0, sides, weight, ctx);
+    }
+  }
+  if (gpaths.length === 0) {
+    main();
+    return;
+  }
+  ctx.lineWidth = 2.4;
+  infChek(gpaths);
+  const active = gpaths.shift()[1];
+  visualVert.push(...active);
+  for (let i = 1; i < active.length;i++){
+    const pushed = [active[i - 1], active[i]];
+    if (!visualEdge.toString().includes(pushed.toString()))
+      visualEdge.push(pushed);
+  }
+  main();
+}
+
+// Serealize part
+
+const serealizeDijkstra = gpaths => {
+  const mapper = a => {
+    const r = a[1].reduce((c,b) => `${c}➢${b}`);
+    return `{way: ${r}, weight: ${a[0]}}`
+  }
+  return gpaths.map(mapper);
+}
 
 //Usage // Begin //
 
@@ -1046,7 +1156,11 @@ document.getElementById('matrix').onclick = function() {
 document.getElementById('ways').onclick = function() {
   ctx2.fillStyle = 'black';
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
-  const flag = prompt('What length ?');
+  const flag = prompt('What length?/dijkstra');
+  if (flag === 'dijkstra') {
+    serealizeWays(serealizedD, 30, 30, 0, 1);
+    return;
+  } 
   serealizeWays(findWays(matrix, parseInt(flag)),30, 30, flag);
 }
 
@@ -1122,4 +1236,28 @@ document.getElementById('skeleton').onclick = function() {
     sideRight: []
   };
   buildPrimesSkl(visualizeArr, visualaze, vertexP, sidesP, visual, weightM, weight, ctx2);
+}
+
+
+
+// Lab 6 
+
+const visualVD = new Array();
+const visualED = new Array();
+const weightsMap = dijkstra(weightM, 0);
+const pask = dePath(weightM, weightsMap, QUANTITY);
+const gpaths = doQueneD(pask, weightsMap);
+const serealizedD = serealizeDijkstra(gpaths);
+console.log(serealizedD);
+
+
+document.getElementById('dijkstra').onclick = function() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  const sidesD = {
+    sideDown: [],
+    sideLeft: [],
+    sideRight: [],
+  }
+  const vertexD = new Object();
+  graphicsDijkstra(vertexD, sidesD, weightM, gpaths, visualVD, visualED, 1,ctx2);
 }
