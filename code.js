@@ -445,7 +445,7 @@ const edge = (matrix, directed, vertex, sides, moment, weightM, ctx) => {
   let count = 200;
   for (let i = 0; i < matrix.length; i++) {
     const length = directed ? matrix[i].length : i + 1;
-    console.log(length);
+    //console.log(length);
     for (let j = 0; j < length; j++) {
       if (matrix[i][j] === 1) {
         count += 100;
@@ -476,7 +476,7 @@ const edge = (matrix, directed, vertex, sides, moment, weightM, ctx) => {
         const checked = check(from, to, sides);
         if (moment){
           window.setTimeout(() => {
-            console.log(checked);
+            //console.log(checked);
             evasion(from, to, checked, directed, arrowRadius, sides, weight, ctx);
           },count);
         } else evasion(from, to, checked, directed, arrowRadius, sides, weight, ctx);
@@ -763,22 +763,25 @@ const hightlightVertex = (color, listVvertex, numberVertex, radius, matrixNum, c
   }
 }
 
-const hightlightEdge = (color, matrix, vertex, sides, numberEdges,ctx) => {
+const hightlightEdge = (color, matrix, vertex, sides, numberEdges, directed, weightM,ctx) => {
+  const radius = directed ? 12 : 0;
   ctx.fillStyle = 'black';
   ctx.lineWidth = 2.4;
   const length = matrix.length;
   for (let i = 0; i < length; i++) {
-    for (let j = 0; j < length; j++) {
+    const lengthT = directed ? 0 : i;
+    for (let j = lengthT; j < length; j++) {
       if (matrix[i][j] === 1){
         const a = i + 1, b = j + 1;   
         const from = vertex['ver' + a], to = vertex['ver' + b];
+        const weight = weightM ? weightM[i][j].toString() : weightM;
         const checked = check(from, to, sides);
         branches['f' + a + 't' + b] = 1;
         if (numberEdges.includes(`f${a}t${b}`)){
           ctx.fillStyle = color;
           ctx.strokeStyle = color;
         }
-        evasion(from, to, checked, true, 12, sides, false, ctx);
+        evasion(from, to, checked, directed, radius, sides, weight, ctx);
         ctx.fillStyle = 'black';
         ctx.strokeStyle = 'black';
       }
@@ -825,7 +828,7 @@ const bfsAlgoritm = (start, matrix, infoBfs, visualReturned, direction) => {
 const hightlightBFS = (visualReturned, vertexBlue, edgesBlue, matrix, sides, vertex, infoBfs, direction,matrixNum, ctx) => {
   if (visualReturned.length === 0) {
     graphTriangle(QUANTITY, ctx, sides, vertex);
-    hightlightEdge('blue',matrix, vertex, sides,edgesBlue, ctx);
+    hightlightEdge('blue',matrix, vertex, sides,edgesBlue, true, false,ctx);
     hightlightVertex('blue', vertex, vertexBlue, radius, matrixNum,ctx);
     return;
   }
@@ -849,7 +852,7 @@ const hightlightBFS = (visualReturned, vertexBlue, edgesBlue, matrix, sides, ver
     visualReturned.shift();
     vertexBlue.push(activeVer);
   }
-  hightlightEdge('blue',matrix, vertex, sides,edgesBlue, ctx);
+  hightlightEdge('blue',matrix, vertex, sides,edgesBlue, true, false,ctx);
   hightlightVertex('blue', vertex, vertexBlue, radius,matrixNum, ctx);
   hightlightVertex('red', vertex, [activeVer], radius,matrixNum, ctx);
   hightlightVertex('lime',vertex,limeV,radius,matrixNum,ctx);
@@ -1037,36 +1040,59 @@ const infChek = gpaths => {
   }
 }
 
-const graphicsDijkstra = (vertex, sides, weightM, gpaths, visualVert, visualEdge, start ,ctx) => {
+const graphicsDijkstra = (matrix, vertex, sides, weightM, gpaths, visualVert, visualEdge, start, matrixNum, matrixI,ctx) => {
+  if (!visualVert.includes(start)) visualVert.push(start);
   const main = () => {
     graphTriangle(QUANTITY, ctx, sides, vertex);
-    hightlightVertex('blue', vertex, [1,2,3,4,5,6,7,8,9,10], radius, null, ctx2);
-    hightlightVertex('lime', vertex, visualVert, radius, null, ctx2);
-    hightlightVertex('red', vertex, [start], radius, null, ctx2);
-    for (const coords of visualEdge) {
-      const from = vertex['ver' + coords[0]], to = vertex['ver' + coords[1]];
-      const checked = check(from, to, sides);
-      const weight = weightM[coords[0] - 1][coords[1] - 1].toString();
-      evasion(from, to, checked, false, 0, sides, weight, ctx);
+    hightlightVertex('blue', vertex, [1,2,3,4,5,6,7,8,9,10], radius, matrixNum, ctx2);
+    hightlightVertex('lime', vertex, visualVert, radius, matrixNum, ctx2);
+    hightlightVertex('red', vertex, [start, active[active.length - 1]], radius, matrixNum, ctx2);
+    const matrixD = [];
+    const numberEdges = [];
+    for (const edge of visualEdge) numberEdges.push(`f${edge[0]}t${edge[1]}`, `f${edge[1]}t${edge[0]}`);
+    for (let i = 0; i < matrix.length; i++) {
+      for (let j = 0; j < matrix[i].length; j++) {
+        if (visualEdge.toString().includes(`${i + 1}`) && i + 1 !== active[active.length - 1])
+          matrixD[i] = matrix[i];
+        else matrixD[i] = new Array(10).fill(0);
+      }
     }
+    hightlightEdge('lime', doSymetricMatrix(matrixD), vertex, sides, numberEdges, false, weightM,ctx2);
+    //edge(doSymetricMatrix(matrixD), false, vertex, sides, false, weightM, ctx2);
   }
   if (gpaths.length === 0) {
-    main();
+    graphTriangle(QUANTITY, ctx2, sides, vertex);
+    edge(doSymetricMatrix(matrixI), false, vertex, sides, false, weightM, ctx2);
+    hightlightVertex('lime', vertex, [1,2,3,4,5,6,7,8,9,10], radius, matrixNum, ctx2);
+    hightlightVertex('red', vertex, [start], radius, matrixNum, ctx2);
     return;
   }
   ctx.lineWidth = 2.4;
   infChek(gpaths);
   const active = gpaths.shift()[1];
   visualVert.push(...active);
+  for (const ver of active) matrixNum[1][ver - 1] = 'P';
   for (let i = 1; i < active.length;i++){
     const pushed = [active[i - 1], active[i]];
     if (!visualEdge.toString().includes(pushed.toString()))
       visualEdge.push(pushed);
-  }
+  };
+  for (const edge of visualEdge) matrixI[edge[0] - 1][edge[1] - 1] = 1;
   main();
 }
 
 // Serealize part
+
+const doTreeByGpaths = (QUANTITY, gpaths) => {
+  const res = [];
+  const edges = [];
+  for (let i = 0;i < QUANTITY; i++){
+    res[i] = [];
+    for (let j = 0;j < QUANTITY; j++)
+      res[i][j] = 0;
+  }
+  return res;
+}
 
 const serealizeDijkstra = gpaths => {
   const mapper = a => {
@@ -1222,7 +1248,7 @@ document.getElementById('start').onclick = function(){
 const visualizeArr = new Array();
 const WM = doSymetricMatrix(weightM);
 const {skeletonM, weight} = minSkeleton(WM,[1], visualizeArr);
-console.log(weight);
+//console.log(weight);
 const visualaze = new Array(), visual = new Array();
 
 
@@ -1242,13 +1268,15 @@ document.getElementById('skeleton').onclick = function() {
 
 // Lab 6 
 
-const visualVD = new Array();
-const visualED = new Array();
 const weightsMap = dijkstra(weightM, 0);
 const pask = dePath(weightM, weightsMap, QUANTITY);
 const gpaths = doQueneD(pask, weightsMap);
 const serealizedD = serealizeDijkstra(gpaths);
-console.log(serealizedD);
+const matrixNum = [
+  [1,    2,    3,   4,   5,   6,   7,   8,   9,  10],
+  ['P', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T']
+];
+const treeMatrix = doTreeByGpaths(QUANTITY, gpaths);
 
 
 document.getElementById('dijkstra').onclick = function() {
@@ -1259,5 +1287,7 @@ document.getElementById('dijkstra').onclick = function() {
     sideRight: [],
   }
   const vertexD = new Object();
-  graphicsDijkstra(vertexD, sidesD, weightM, gpaths, visualVD, visualED, 1,ctx2);
+  const visualVD = new Array();
+  const visualED = new Array();
+  graphicsDijkstra(doSymetricMatrix(matrix), vertexD, sidesD, weightM, gpaths, visualVD, visualED, 1, matrixNum, treeMatrix, ctx2);
 }
