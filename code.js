@@ -973,7 +973,7 @@ const buildPrimesSkl = (visualizeArr,visualize, vertex, sides,visual, weightM, w
 
 // Mechanc part
 
-const dijkstra = (weightM, start) => {
+const dijkstra = (weightM, start, timeDistances) => {
   const distances = [];
   for (let i = 0; i < weightM.length; i++) distances[i] = Number.MAX_VALUE;
   distances[start] = 0;
@@ -996,6 +996,7 @@ const dijkstra = (weightM, start) => {
           }
       }
       visited[shortestIndex] = true;
+      timeDistances.push(distances.slice(0));
   }
 };
 
@@ -1057,7 +1058,7 @@ const graphicsDijkstra = (matrix, vertex, sides, weightM, gpaths, visualVert, vi
         else matrixD[i] = new Array(10).fill(0);
       }
     }
-    hightlightEdge('lime', doSymetricMatrix(matrixD), vertex, sides, numberEdges, false, weightM,ctx2);
+    hightlightEdge('lime', doSymetricMatrix(matrix), vertex, sides, numberEdges, false, weightM,ctx2);
     //edge(doSymetricMatrix(matrixD), false, vertex, sides, false, weightM, ctx2);
   }
   if (gpaths.length === 0) {
@@ -1100,6 +1101,26 @@ const serealizeDijkstra = gpaths => {
     return `{way: ${r}, weight: ${a[0]}}`
   }
   return gpaths.map(mapper);
+}
+
+const doTable = (data, ctx) => {
+  for (let i = 0; i < data.length; i++){
+    for (let j = 0; j < data[i].length; j++){
+      if (data[i][j] === Number.MAX_VALUE) data[i][j] = '∞';
+    }
+  };
+  const line = [];
+  for (let i = 1; i <= 10; i++) line.push(i);
+  const line2 = data.shift().map( x => `${x}`);
+  const line1 = line.map(x => `${x}`);
+  const eac1 = parseInt(line1.reduce((a, b) => a.length > b.length ? a : b));
+  const eac2 =  parseInt(line2.reduce((a, b) => a.length > b.length ? a : b));
+  const max = Math.max(eac1, eac2).toString().length;
+  const res1 = line1.map(x => x.length < max ? `${x} ` : x);
+  const res2 = line2.map(x => x.length < max && x != '∞'? `${x} ` : x);
+  console.log(res1)
+  ctx.fillText(res1.join(' | '), 20, 20, 300);
+  ctx.fillText(res2.join(' | '), 20, 45, 300);
 }
 
 //Usage // Begin //
@@ -1268,7 +1289,9 @@ document.getElementById('skeleton').onclick = function() {
 
 // Lab 6 
 
-const weightsMap = dijkstra(weightM, 0);
+const timeDistances = [];
+const weightsMap = dijkstra(weightM, 0, timeDistances);
+console.log(timeDistances);
 const pask = dePath(weightM, weightsMap, QUANTITY);
 const gpaths = doQueneD(pask, weightsMap);
 const serealizedD = serealizeDijkstra(gpaths);
@@ -1277,6 +1300,7 @@ const matrixNum = [
   ['P', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T']
 ];
 const treeMatrix = doTreeByGpaths(QUANTITY, gpaths);
+
 
 
 document.getElementById('dijkstra').onclick = function() {
@@ -1289,5 +1313,6 @@ document.getElementById('dijkstra').onclick = function() {
   const vertexD = new Object();
   const visualVD = new Array();
   const visualED = new Array();
+  doTable(timeDistances, ctx2);
   graphicsDijkstra(doSymetricMatrix(matrix), vertexD, sidesD, weightM, gpaths, visualVD, visualED, 1, matrixNum, treeMatrix, ctx2);
 }
