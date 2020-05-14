@@ -1048,18 +1048,9 @@ const graphicsDijkstra = (matrix, vertex, sides, weightM, gpaths, visualVert, vi
     hightlightVertex('blue', vertex, [1,2,3,4,5,6,7,8,9,10], radius, matrixNum, ctx2);
     hightlightVertex('lime', vertex, visualVert, radius, matrixNum, ctx2);
     hightlightVertex('red', vertex, [start, active[active.length - 1]], radius, matrixNum, ctx2);
-    const matrixD = [];
     const numberEdges = [];
     for (const edge of visualEdge) numberEdges.push(`f${edge[0]}t${edge[1]}`, `f${edge[1]}t${edge[0]}`);
-    for (let i = 0; i < matrix.length; i++) {
-      for (let j = 0; j < matrix[i].length; j++) {
-        if (visualEdge.toString().includes(`${i + 1}`) && i + 1 !== active[active.length - 1])
-          matrixD[i] = matrix[i];
-        else matrixD[i] = new Array(10).fill(0);
-      }
-    }
     hightlightEdge('lime', doSymetricMatrix(matrix), vertex, sides, numberEdges, false, weightM,ctx2);
-    //edge(doSymetricMatrix(matrixD), false, vertex, sides, false, weightM, ctx2);
   }
   if (gpaths.length === 0) {
     graphTriangle(QUANTITY, ctx2, sides, vertex);
